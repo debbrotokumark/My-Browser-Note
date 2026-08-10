@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Note — a ledger for your thoughts</title>
+    <style>
+        /* ── reset & root ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f8f7f4;
+            --surface: #ffffff;
+            --surface-hover: #f2f0ed;
+            --surface-border: #e5e3df;
+            --text: #1c1b1a;
+            --text-soft: #6b6966;
+            --text-muted: #9a9894;
+            --accent: #2b2a28;
+            --accent-hover: #3d3b38;
+            --accent-light: #eae8e4;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+            --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            --serif: "Georgia", "Times New Roman", Times, serif;
+            --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Helvetica, Arial, sans-serif;
+            --mono: "SFMono-Regular", "Consolas", "Liberation Mono", Menlo, monospace;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--surface-border);
+            border-radius: 20px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* ── top bar ── */
+        header.masthead {
+            padding: 24px 32px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            border-bottom: 1px solid var(--surface-border);
+            background: var(--surface);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .masthead-left {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+        }
+
+        .masthead h1 {
+            font-family: var(--serif);
+            font-size: 28px;
+            font-weight: 400;
+            letter-spacing: -0.3px;
+            margin: 0;
+            background: linear-gradient(135deg, var(--text) 60%, var(--text-soft));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .masthead .sub {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 400;
+            -webkit-text-fill-color: var(--text-muted);
+            background: none;
+        }
+
+        .masthead-meta {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-soft);
+            text-align: right;
+            line-height: 1.5;
+            background: var(--bg);
+            padding: 6px 14px;
+            border-radius: 40px;
+            border: 1px solid var(--surface-border);
+        }
+
+        .masthead-meta strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* ── toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 32px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--surface-border);
+            flex-wrap: wrap;
+            position: sticky;
+            top: 72px;
+            z-index: 40;
+            backdrop-filter: blur(6px);
+        }
+
+        .toolbar .spacer {
+            flex: 1;
+        }
+
+        button,
+        .file-btn {
+            font-family: var(--sans);
+            font-size: 12.5px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border: 1px solid var(--surface-border);
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+
+        button:hover,
+        .file-btn:hover {
+            background: var(--accent);
+            color: var(--surface);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        button.primary {
+            background: var(--accent);
+            color: var(--surface);
+            border-color: var(--accent);
+        }
+
+        button.primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+            box-shadow: var(--shadow-sm);
+        }
+
+        button.ghost {
+            border-color: var(--surface-border);
+            color: var(--text-soft);
+            background: transparent;
+        }
+
+        button.ghost:hover {
+            border-color: var(--text);
+            color: var(--text);
+            background: var(--bg);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        button:disabled:hover {
+            background: var(--surface);
+            color: var(--text);
+            border-color: var(--surface-border);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .search-box {
+            font-family: var(--mono);
+            font-size: 12.5px;
+            padding: 8px 14px;
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-sm);
+            min-width: 200px;
+            background: var(--bg);
+            color: var(--text);
+            transition: all var(--transition);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--text);
+            background: var(--surface);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-box::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ── layout ── */
+        .layout {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            flex: 1;
+            min-height: 0;
+            background: var(--bg);
+        }
+
+        @media (max-width: 820px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+            .list-pane {
+                border-right: none;
+                border-bottom: 1px solid var(--surface-border);
+                max-height: 380px;
+            }
+            .toolbar {
+                top: 62px;
+            }
+            header.masthead {
+                top: 0;
+            }
+        }
+
+        /* ── list pane ── */
+        .list-pane {
+            background: var(--surface);
+            border-right: 1px solid var(--surface-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .list-pane::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to top, var(--surface), transparent);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .list-count {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 16px 20px 8px;
+            flex-shrink: 0;
+            font-weight: 500;
+        }
+
+        .note-list {
+            list-style: none;
+            margin: 0;
+            padding: 0 0 20px 0;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .note-item {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--surface-border);
+            cursor: pointer;
+            position: relative;
+            transition: all var(--transition);
+            margin: 0 6px;
+            border-radius: var(--radius-sm);
+            border-bottom: none;
+            margin-bottom: 2px;
+        }
+
+        .note-item:hover {
+            background: var(--surface-hover);
+        }
+
+        .note-item.active {
+            background: var(--accent-light);
+            box-shadow: inset 0 0 0 1px var(--accent);
+        }
+
+        .note-item .row1 {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .note-item .idx {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+            font-weight: 500;
+        }
+
+        .note-item .date {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+        }
+
+        .note-item .title {
+            font-family: var(--serif);
+            font-size: 16px;
+            margin-top: 4px;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 500;
+            letter-spacing: -0.2px;
+        }
+
+        .note-item .preview {
+            font-size: 12px;
+            color: var(--text-soft);
+            margin-top: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 400;
+        }
+
+        .empty-list {
+            padding: 40px 24px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.8;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .empty-list span {
+            display: block;
+            font-family: var(--serif);
+            font-size: 32px;
+            margin-bottom: 12px;
+            color: var(--surface-border);
+        }
+
+        /* ── editor pane ── */
+        .editor-pane {
+            padding: 32px 40px 40px;
+            background: var(--surface);
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-meta {
+            display: flex;
+            gap: 28px;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--surface-border);
+            padding-bottom: 14px;
+        }
+
+        .editor-meta span {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .editor-meta span strong {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text);
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 500;
+            background: var(--bg);
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+
+        input.title-field {
+            width: 100%;
+            font-family: var(--serif);
+            font-size: 28px;
+            font-weight: 400;
+            border: none;
+            border-bottom: 2px solid var(--surface-border);
+            padding: 6px 0 12px;
+            margin-bottom: 20px;
+            background: transparent;
+            color: var(--text);
+            transition: all var(--transition);
+            letter-spacing: -0.3px;
+        }
+
+        input.title-field:focus {
+            outline: none;
+            border-bottom-color: var(--text);
+        }
+
+        input.title-field::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+            font-weight: 300;
+        }
+
+        textarea.details-field {
+            width: 100%;
+            min-height: 320px;
+            font-family: var(--sans);
+            font-size: 14.5px;
+            line-height: 1.8;
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            resize: vertical;
+            background: var(--bg);
+            color: var(--text);
+            transition: all var(--transition);
+        }
+
+        textarea.details-field:focus {
+            outline: none;
+            border-color: var(--text);
+            background: var(--surface);
+            box-shadow: var(--shadow-sm);
+        }
+
+        textarea.details-field::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 22px;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .editor-actions .left-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .editor-actions .save-status {
+            font-family: var(--mono);
+            font-size: 10.5px;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+            background: var(--bg);
+            padding: 4px 14px;
+            border-radius: 20px;
+        }
+
+        /* ── placeholder ── */
+        .placeholder-pane {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            padding: 40px;
+            text-align: center;
+            background: var(--surface);
+        }
+
+        .placeholder-pane .inner {
+            max-width: 380px;
+        }
+
+        .placeholder-pane .mark {
+            font-family: var(--serif);
+            font-size: 56px;
+            color: var(--surface-border);
+            margin-bottom: 8px;
+            font-weight: 300;
+        }
+
+        .placeholder-pane h2 {
+            font-family: var(--serif);
+            font-weight: 400;
+            font-size: 22px;
+            margin: 0 0 10px;
+            letter-spacing: -0.2px;
+        }
+
+        .placeholder-pane p {
+            font-size: 13.5px;
+            color: var(--text-soft);
+            line-height: 1.7;
+            margin: 0 0 24px;
+            font-weight: 400;
+        }
+
+        /* ── footer ── */
+        footer.foot {
+            border-top: 1px solid var(--surface-border);
+            padding: 14px 32px;
+            font-family: var(--mono);
+            font-size: 9.5px;
+            color: var(--text-muted);
+            letter-spacing: 1.2px;
+            text-align: center;
+            background: var(--surface);
+            text-transform: uppercase;
+            margin-top: auto;
+        }
+
+        /* ── toast ── */
+        #toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--accent);
+            color: var(--surface);
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 100;
+            letter-spacing: 0.3px;
+            box-shadow: var(--shadow-lg);
+            font-weight: 500;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.25s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-box {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: var(--radius);
+            max-width: 400px;
+            width: 90%;
+            padding: 30px 32px 28px;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .modal-box h3 {
+            font-family: var(--serif);
+            font-weight: 400;
+            font-size: 20px;
+            margin: 0 0 8px;
+            letter-spacing: -0.2px;
+        }
+
+        .modal-box p {
+            font-size: 13.5px;
+            color: var(--text-soft);
+            line-height: 1.6;
+            margin: 0 0 24px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* ── responsive tweaks ── */
+        @media (max-width: 600px) {
+            header.masthead {
+                padding: 16px 16px 12px;
+            }
+            .masthead h1 {
+                font-size: 22px;
+            }
+            .masthead .sub {
+                font-size: 8px;
+                letter-spacing: 1.2px;
+            }
+            .toolbar {
+                padding: 10px 16px;
+                gap: 6px;
+            }
+            .toolbar .search-box {
+                min-width: 140px;
+                font-size: 11px;
+            }
+            button,
+            .file-btn {
+                font-size: 11px;
+                padding: 6px 12px;
+            }
+            .editor-pane {
+                padding: 20px 16px 28px;
+            }
+            input.title-field {
+                font-size: 22px;
+            }
+            textarea.details-field {
+                min-height: 200px;
+                font-size: 13px;
+            }
+            .editor-meta {
+                gap: 14px;
+                font-size: 9px;
+            }
+            .editor-meta span strong {
+                font-size: 10px;
+            }
+            .list-pane {
+                max-height: 280px;
+            }
+            .note-item {
+                padding: 10px 14px;
+            }
+            .note-item .title {
+                font-size: 14px;
+            }
+            .masthead-meta {
+                font-size: 9px;
+                padding: 4px 10px;
+            }
+            .placeholder-pane .mark {
+                font-size: 40px;
+            }
+            .placeholder-pane h2 {
+                font-size: 18px;
+            }
+            .modal-box {
+                padding: 22px 20px 20px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .toolbar .search-box {
+                min-width: 100px;
+                width: 100%;
+            }
+            .toolbar .spacer {
+                display: none;
+            }
+            .editor-actions .left-group {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── header ─── -->
+    <header class="masthead">
+        <div class="masthead-left">
+            <h1>Note</h1>
+            <span class="sub">a private ledger, kept on this device</span>
+        </div>
+        <div class="masthead-meta" id="headerMeta">
+            <strong id="noteCountMeta">0</strong> entries stored locally
+        </div>
+    </header>
+
+    <!-- ─── toolbar ─── -->
+    <div class="toolbar">
+        <button class="primary" id="newNoteBtn">＋ New note</button>
+        <input class="search-box" id="searchBox" type="text" placeholder="Search title or details…" />
+        <div class="spacer"></div>
+        <button class="ghost" id="downloadBtn">⬇ Download (.json)</button>
+        <label class="file-btn ghost" for="uploadInput" style="display:inline-flex;">⬆ Upload (.json)</label>
+        <input type="file" id="uploadInput" accept="application/json,.json" />
+        <button class="ghost" id="clearAllBtn">✕ Erase all</button>
+    </div>
+
+    <!-- ─── layout ─── -->
+    <div class="layout">
+        <div class="list-pane">
+            <div class="list-count" id="listCount">0 notes</div>
+            <ul class="note-list" id="noteList"></ul>
+        </div>
+
+        <div id="rightPane">
+            <div class="placeholder-pane">
+                <div class="inner">
+                    <div class="mark">§</div>
+                    <h2>Nothing selected</h2>
+                    <p>Choose an entry from the ledger on the left, or start a new note. Everything you write stays only in this browser's storage on this device.</p>
+                    <button class="primary" id="placeholderNewBtn">＋ New note</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── footer ─── -->
+    <footer class="foot">
+        stored in this browser's local storage · not sent anywhere · survives restarts · not shared across devices or browsers
+    </footer>
+
+    <!-- ─── toast ─── -->
+    <div id="toast"></div>
+
+    <!-- ─── modal ─── -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <h3 id="modalTitle">Are you sure?</h3>
+            <p id="modalText">This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="ghost" id="modalCancel">Cancel</button>
+                <button class="primary" id="modalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── script ─── -->
+    <script>
+        (function() {
+            "use strict";
+
+            var STORAGE_KEY = "note_ledger_entries_v1";
+            var notes = [];
+            var activeId = null;
+            var searchTerm = "";
+            var pendingAction = null;
+
+            var listEl = document.getElementById("noteList");
+            var listCountEl = document.getElementById("listCount");
+            var noteCountMetaEl = document.getElementById("noteCountMeta");
+            var rightPane = document.getElementById("rightPane");
+            var toastEl = document.getElementById("toast");
+            var modalOverlay = document.getElementById("modalOverlay");
+            var modalTitle = document.getElementById("modalTitle");
+            var modalText = document.getElementById("modalText");
+
+            // ── storage ──
+            function loadNotes() {
+                try {
+                    var raw = localStorage.getItem(STORAGE_KEY);
+                    notes = raw ? JSON.parse(raw) : [];
+                    if (!Array.isArray(notes)) notes = [];
+                } catch (_) {
+                    notes = [];
+                }
+            }
+
+            function saveNotes() {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+                    return true;
+                } catch (_) {
+                    showToast("Storage failed — your browser may be blocking local storage.");
+                    return false;
+                }
+            }
+
+            // ── helpers ──
+            function genId() {
+                return "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+            }
+
+            function nowIso() {
+                var d = new Date();
+                var pad = function(n) { return n < 10 ? "0" + n : "" + n; };
+                return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) +
+                    ":" + pad(d.getMinutes());
+            }
+
+            function escapeHtml(str) {
+                var div = document.createElement("div");
+                div.textContent = str == null ? "" : String(str);
+                return div.innerHTML;
+            }
+
+            function showToast(msg) {
+                toastEl.textContent = msg;
+                toastEl.classList.add("show");
+                clearTimeout(showToast._t);
+                showToast._t = setTimeout(function() { toastEl.classList.remove("show"); }, 2600);
+            }
+
+            function askConfirm(title, text, onConfirm) {
+                modalTitle.textContent = title;
+                modalText.textContent = text;
+                pendingAction = onConfirm;
+                modalOverlay.classList.add("show");
+            }
+
+            document.getElementById("modalCancel").addEventListener("click", function() {
+                modalOverlay.classList.remove("show");
+                pendingAction = null;
+            });
+            document.getElementById("modalConfirm").addEventListener("click", function() {
+                modalOverlay.classList.remove("show");
+                if (pendingAction) pendingAction();
+                pendingAction = null;
+            });
+            modalOverlay.addEventListener("click", function(e) {
+                if (e.target === modalOverlay) {
+                    modalOverlay.classList.remove("show");
+                    pendingAction = null;
+                }
+            });
+
+            // ── rendering ──
+            function sortedNotes() {
+                return notes.slice().sort(function(a, b) {
+                    return (b.date || "").localeCompare(a.date || "");
+                });
+            }
+
+            function filteredNotes() {
+                var list = sortedNotes();
+                if (!searchTerm) return list;
+                var q = searchTerm.toLowerCase();
+                return list.filter(function(n) {
+                    return (n.title || "").toLowerCase().indexOf(q) !== -1 ||
+                        (n.details || "").toLowerCase().indexOf(q) !== -1;
+                });
+            }
+
+            function renderList() {
+                var list = filteredNotes();
+                noteCountMetaEl.textContent = notes.length;
+                listCountEl.textContent = notes.length + (notes.length === 1 ? " note" : " notes") +
+                    (searchTerm ? " · " + list.length + " match" + (list.length === 1 ? "" : "es") : "");
+
+                if (notes.length === 0) {
+                    listEl.innerHTML =
+                        '<div class="empty-list"><span>✎</span>No notes yet.<br />Write your first entry — it stays on this device only.</div>';
+                    return;
+                }
+
+                if (list.length === 0) {
+                    listEl.innerHTML = '<div class="empty-list"><span>🔍</span>No notes match “' + escapeHtml(searchTerm) +
+                        '”.</div>';
+                    return;
+                }
+
+                var html = "";
+                list.forEach(function(n, i) {
+                    var isActive = n.id === activeId;
+                    var previewText = (n.details || "").replace(/\s+/g, " ").trim();
+                    html += '<li class="note-item' + (isActive ? " active" : "") + '" data-id="' + n.id + '">' +
+                        '<div class="row1"><span class="idx">No. ' + String(i + 1).padStart(3, "0") + '</span>' +
+                        '<span class="date">' + escapeHtml(n.date || "") + '</span></div>' +
+                        '<div class="title">' + escapeHtml(n.title || "Untitled") + '</div>' +
+                        '<div class="preview">' + escapeHtml(previewText || "No details.") + '</div>' +
+                        '</li>';
+                });
+                listEl.innerHTML = html;
+
+                Array.prototype.forEach.call(listEl.querySelectorAll(".note-item"), function(item) {
+                    item.addEventListener("click", function() {
+                        selectNote(item.getAttribute("data-id"));
+                    });
+                });
+            }
+
+            function renderPlaceholder() {
+                rightPane.innerHTML =
+                    '<div class="placeholder-pane"><div class="inner">' +
+                    '<div class="mark">§</div>' +
+                    '<h2>Nothing selected</h2>' +
+                    '<p>Choose an entry from the ledger on the left, or start a new note. Everything you write stays only in this browser\'s storage on this device.</p>' +
+                    '<button class="primary" id="placeholderNewBtn2">＋ New note</button>' +
+                    '</div></div>';
+                document.getElementById("placeholderNewBtn2").addEventListener("click", createNote);
+            }
+
+            function renderEditor(note, isNew) {
+                var idx = sortedNotes().findIndex(function(n) { return n.id === note.id; });
+                var idxLabel = idx >= 0 ? String(idx + 1).padStart(3, "0") : "—";
+
+                rightPane.innerHTML =
+                    '<div class="editor-pane">' +
+                    '<div class="editor-meta">' +
+                    '<span>Id<strong>' + escapeHtml(note.id) + '</strong></span>' +
+                    '<span>Entry<strong>No. ' + idxLabel + '</strong></span>' +
+                    '<span>Date<strong>' + escapeHtml(note.date) + '</strong></span>' +
+                    '</div>' +
+                    '<input class="title-field" id="titleField" type="text" placeholder="Untitled note" value="' +
+                    escapeHtml(note.title) + '">' +
+                    '<textarea class="details-field" id="detailsField" placeholder="Write the details of this note…">' +
+                    escapeHtml(note.details) + '</textarea>' +
+                    '<div class="editor-actions">' +
+                    '<div class="left-group">' +
+                    '<button class="primary" id="saveBtn">' + (isNew ? "Create note" : "Save changes") + '</button>' +
+                    (isNew ? '' : '<button class="ghost" id="deleteBtn">Delete</button>') +
+                    '</div>' +
+                    '<span class="save-status" id="saveStatus"> </span>' +
+                    '</div>' +
+                    '</div>';
+
+                document.getElementById("saveBtn").addEventListener("click", function() {
+                    saveEditorState(note.id, isNew);
+                });
+                if (!isNew) {
+                    document.getElementById("deleteBtn").addEventListener("click", function() {
+                        askConfirm("Delete this note?", "“" + (note.title || "Untitled") +
+                            "” will be permanently removed from this device.", function() {
+                            deleteNote(note.id);
+                        });
+                    });
+                }
+
+                // auto-focus title if new
+                if (isNew) {
+                    document.getElementById("titleField").focus();
+                }
+
+                // update status indicator
+                var statusEl = document.getElementById("saveStatus");
+                if (statusEl) {
+                    statusEl.textContent = isNew ? "draft" : "saved";
+                    statusEl.style.color = "var(--text-muted)";
+                }
+            }
+
+            // ── actions ──
+            function createNote() {
+                var note = { id: genId(), date: nowIso(), title: "", details: "" };
+                activeId = null;
+                renderEditor(note, true);
+            }
+
+            function selectNote(id) {
+                var note = notes.find(function(n) { return n.id === id; });
+                if (!note) return;
+                activeId = id;
+                renderList();
+                renderEditor(note, false);
+            }
+
+            function saveEditorState(id, isNew) {
+                var title = document.getElementById("titleField").value.trim();
+                var details = document.getElementById("detailsField").value;
+
+                if (!title && !details.trim()) {
+                    showToast("Write something before saving.");
+                    return;
+                }
+
+                if (isNew) {
+                    var note = { id: id, date: nowIso(), title: title || "Untitled", details: details };
+                    notes.push(note);
+                    if (!saveNotes()) return;
+                    activeId = id;
+                    renderList();
+                    renderEditor(note, false);
+                    showToast("Note created.");
+                } else {
+                    var existing = notes.find(function(n) { return n.id === id; });
+                    if (!existing) return;
+                    existing.title = title || "Untitled";
+                    existing.details = details;
+                    existing.date = nowIso();
+                    if (!saveNotes()) return;
+                    renderList();
+                    renderEditor(existing, false);
+                    showToast("Note updated.");
+                }
+            }
+
+            function deleteNote(id) {
+                notes = notes.filter(function(n) { return n.id !== id; });
+                if (!saveNotes()) return;
+                if (activeId === id) activeId = null;
+                renderList();
+                renderPlaceholder();
+                showToast("Note deleted.");
+            }
+
+            function eraseAll() {
+                notes = [];
+                saveNotes();
+                activeId = null;
+                renderList();
+                renderPlaceholder();
+                showToast("All notes erased from this device.");
+            }
+
+            // ── import / export ──
+            function downloadJson() {
+                if (notes.length === 0) {
+                    showToast("No notes to download yet.");
+                    return;
+                }
+                var payload = {
+                    exportedAt: new Date().toISOString(),
+                    source: "Note ledger",
+                    count: notes.length,
+                    notes: sortedNotes()
+                };
+                var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement("a");
+                var stamp = new Date().toISOString().slice(0, 10);
+                a.href = url;
+                a.download = "notes-export-" + stamp + ".json";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast("Downloaded " + notes.length + " note" + (notes.length === 1 ? "" : "s") + ".");
+            }
+
+            function normalizeImported(raw) {
+                var arr = null;
+                if (Array.isArray(raw)) arr = raw;
+                else if (raw && Array.isArray(raw.notes)) arr = raw.notes;
+                if (!arr) return null;
+
+                var cleaned = [];
+                arr.forEach(function(item) {
+                    if (!item || typeof item !== "object") return;
+                    var title = typeof item.title === "string" ? item.title : "";
+                    var details = typeof item.details === "string" ? item.details : "";
+                    if (!title && !details) return;
+                    cleaned.push({
+                        id: typeof item.id === "string" && item.id ? item.id : genId(),
+                        date: typeof item.date === "string" && item.date ? item.date : nowIso(),
+                        title: title || "Untitled",
+                        details: details
+                    });
+                });
+                return cleaned;
+            }
+
+            function handleUpload(file) {
+                var reader = new FileReader();
+                reader.onload = function() {
+                    var parsed;
+                    try {
+                        parsed = JSON.parse(reader.result);
+                    } catch (_) {
+                        showToast("That file isn't valid JSON.");
+                        return;
+                    }
+                    var imported = normalizeImported(parsed);
+                    if (imported === null) {
+                        showToast("Couldn't find any notes in that file.");
+                        return;
+                    }
+                    if (imported.length === 0) {
+                        showToast("That file has no readable notes.");
+                        return;
+                    }
+
+                    askConfirm(
+                        "Import " + imported.length + " note" + (imported.length === 1 ? "" : "s") + "?",
+                        "New entries will be added to your existing " + notes.length + " note" + (notes.length === 1 ?
+                            "" : "s") + ". Entries with a matching id will be overwritten.",
+                        function() {
+                            var added = 0,
+                                updated = 0;
+                            imported.forEach(function(imp) {
+                                var idx = notes.findIndex(function(n) { return n.id === imp.id; });
+                                if (idx >= 0) { notes[idx] = imp;
+                                    updated++; } else { notes.push(imp);
+                                    added++; }
+                            });
+                            saveNotes();
+                            renderList();
+                            renderPlaceholder();
+                            showToast("Imported: " + added + " added, " + updated + " updated.");
+                        }
+                    );
+                };
+                reader.readAsText(file);
+            }
+
+            // ── wire up ──
+            document.getElementById("newNoteBtn").addEventListener("click", createNote);
+            document.getElementById("placeholderNewBtn").addEventListener("click", createNote);
+            document.getElementById("downloadBtn").addEventListener("click", downloadJson);
+            document.getElementById("clearAllBtn").addEventListener("click", function() {
+                if (notes.length === 0) { showToast("There's nothing to erase."); return; }
+                askConfirm("Erase all notes?", "This will permanently delete all " + notes.length +
+                    " notes stored on this device. Consider downloading a backup first.", eraseAll);
+            });
+
+            var uploadInput = document.getElementById("uploadInput");
+            uploadInput.addEventListener("change", function() {
+                if (uploadInput.files && uploadInput.files[0]) {
+                    handleUpload(uploadInput.files[0]);
+                    uploadInput.value = "";
+                }
+            });
+
+            var searchBox = document.getElementById("searchBox");
+            searchBox.addEventListener("input", function() {
+                searchTerm = searchBox.value.trim();
+                renderList();
+            });
+
+            document.addEventListener("keydown", function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                    var saveBtn = document.getElementById("saveBtn");
+                    if (saveBtn) saveBtn.click();
+                }
+                if (e.key === "Escape" && modalOverlay.classList.contains("show")) {
+                    modalOverlay.classList.remove("show");
+                    pendingAction = null;
+                }
+            });
+
+            // ── init ──
+            loadNotes();
+            renderList();
+            renderPlaceholder();
+        })();
+    </script>
+</body>
+</html>
